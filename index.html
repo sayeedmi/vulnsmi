@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VulnScope v3 — HTTP Header Scanner</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@400;700;800&display=swap" rel="stylesheet"/>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css"/>
+
+  <!-- PDF library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+<!-- Scan line overlay -->
+<div class="scan-overlay" id="scanOverlay">
+  <div class="scan-line"></div>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast">
+  <div class="toast-dot" id="toastDot"></div>
+  <span id="toastMsg"></span>
+</div>
+
+<!-- App shell -->
+<div class="shell">
+
+  <!-- ══════════════════════════════════
+       SIDEBAR
+  ══════════════════════════════════ -->
+  <aside class="sidebar">
+
+    <div class="brand">
+      <div class="brand-row">
+        <div class="brand-name">
+          <div class="brand-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="M9 12l2 2 4-4"/>
+            </svg>
+          </div>
+          Vuln<span style="color:var(--accent)">Scope</span>
+        </div>
+        <button class="theme-toggle" id="themeToggle"
+                onclick="toggleTheme()"
+                title="Toggle light/dark theme"
+                aria-label="Toggle theme">
+        </button>
+      </div>
+      <div class="brand-ver">v3.0 — HTTP Security</div>
+    </div>
+
+    <div class="nav-label">Scanner</div>
+
+    <button class="nav-btn active" onclick="showTab('scan', this)">
+      <svg class="nav-ico" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd"
+          d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+          clip-rule="evenodd"/>
+      </svg>
+      Single Scan
+    </button>
+
+    <button class="nav-btn" onclick="showTab('compare', this)">
+      <svg class="nav-ico" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z"/>
+      </svg>
+      Compare URLs
+    </button>
+
+    <button class="nav-btn" onclick="showTab('crawl', this)">
+      <svg class="nav-ico" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd"
+          d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z"
+          clip-rule="evenodd"/>
+      </svg>
+      Multi-page Crawl
+    </button>
+
+    <div class="nav-label" style="margin-top:6px;">Analytics</div>
+
+    <button class="nav-btn" onclick="showTab('trends', this)">
+      <svg class="nav-ico" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
+      </svg>
+      Trend Charts
+    </button>
+
+    <button class="nav-btn" onclick="showTab('alerts', this)">
+      <svg class="nav-ico" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
+      </svg>
+      Scheduled Alerts
+      <span id="alertBadge"
+            style="margin-left:auto;background:var(--warn);color:#000;border-radius:10px;padding:1px 6px;font-size:.58rem;font-family:var(--font-ui);font-weight:700;display:none">
+        0
+      </span>
+    </button>
+
+    <button class="nav-btn" onclick="showTab('history', this)">
+      <svg class="nav-ico" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd"
+          d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l3 3a1 1 0 001.414-1.414L11 9.586V6z"
+          clip-rule="evenodd"/>
+      </svg>
+      Scan History
+      <span id="histBadge"
+            style="margin-left:auto;background:var(--accent);color:#000;border-radius:10px;padding:1px 6px;font-size:.58rem;font-family:var(--font-ui);font-weight:700;display:none">
+        0
+      </span>
+    </button>
+
+    <div class="sidebar-footer">
+      AI analysis by Claude.<br>
+      Proxy via allorigins.win.
+    </div>
+
+  </aside>
+
+  <!-- ══════════════════════════════════
+       MAIN CONTENT
+  ══════════════════════════════════ -->
+  <main class="main">
+
+    <!-- Mobile header -->
+    <div class="mobile-header">
+      <div style="font-family:var(--font-ui);font-weight:800;font-size:1.1rem;color:var(--heading);">
+        Vuln<span style="color:var(--accent)">Scope</span>
+        <span style="font-size:.65rem;color:var(--muted);font-weight:400;">v3</span>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme"></button>
+    </div>
+
+    <!-- Mobile tab bar -->
+    <div class="tabs" id="mobileTabs">
+      <button class="tab-btn active" onclick="showTab('scan',this)">Scan</button>
+      <button class="tab-btn" onclick="showTab('compare',this)">Compare</button>
+      <button class="tab-btn" onclick="showTab('crawl',this)">Crawl</button>
+      <button class="tab-btn" onclick="showTab('trends',this)">Trends</button>
+      <button class="tab-btn" onclick="showTab('alerts',this)">Alerts</button>
+      <button class="tab-btn" onclick="showTab('history',this)">History</button>
+    </div>
+
+    <!-- ── SCAN TAB ── -->
+    <div class="tab-panel active" id="tab-scan">
+      <div class="page-header">
+        <div class="page-title">Single <span>Scan</span></div>
+        <div class="page-sub">HTTP Header Security Analysis</div>
+      </div>
+
+      <div class="box">
+        <div class="box-title">Target URL</div>
+        <div class="input-row">
+          <input class="url-input" id="urlInput" placeholder="https://example.com" value="https://example.com"/>
+          <button class="btn btn-primary" id="scanBtn" onclick="runScan()">▶ Scan</button>
+        </div>
+        <div class="status" id="statusBar">Enter a URL and click Scan.</div>
+      </div>
+
+      <!-- Results (hidden until scan) -->
+      <div id="results" style="display:none">
+
+        <div class="export-bar fade-in">
+          <span class="export-lbl">Export:</span>
+          <button class="btn btn-ghost" onclick="exportPDF()" style="font-size:.72rem;padding:8px 14px;">📄 PDF</button>
+          <button class="btn btn-ghost" onclick="exportJSON()" style="font-size:.72rem;padding:8px 14px;">⬇ JSON</button>
+        </div>
+
+        <div class="overview fade-in">
+          <div class="score-card">
+            <div class="score-ring">
+              <svg width="96" height="96" viewBox="0 0 96 96">
+                <circle cx="48" cy="48" r="40" fill="none" stroke="var(--border)" stroke-width="9"/>
+                <circle id="scoreCircle" cx="48" cy="48" r="40" fill="none" stroke="var(--accent)"
+                        stroke-width="9" stroke-linecap="round"
+                        stroke-dasharray="251" stroke-dashoffset="251"
+                        style="transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1),stroke .5s"/>
+              </svg>
+              <div class="score-val" id="scoreVal">--<small>/100</small></div>
+            </div>
+            <div style="font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Score</div>
+            <div class="grade" id="gradeBadge">--</div>
+          </div>
+
+          <div>
+            <div class="stats">
+              <div class="stat">
+                <div class="stat-n" style="color:var(--good)" id="stPresent">--</div>
+                <div class="stat-l">Present</div>
+              </div>
+              <div class="stat">
+                <div class="stat-n" style="color:var(--danger)" id="stMissing">--</div>
+                <div class="stat-l">Missing</div>
+              </div>
+              <div class="stat">
+                <div class="stat-n" style="color:var(--warn)" id="stWarns">--</div>
+                <div class="stat-l">Warnings</div>
+              </div>
+              <div class="url-stat">
+                <div style="font-size:.6rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:3px;">Scanned</div>
+                <div id="stUrl" style="color:var(--accent);font-size:.78rem;word-break:break-all;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="charts-row fade-in">
+          <div class="chart-card">
+            <div class="chart-title">Category Risk</div>
+            <div class="bar-chart" id="barChart"></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Distribution</div>
+            <div class="donut-wrap">
+              <svg id="donutSvg" width="110" height="110" viewBox="0 0 110 110"></svg>
+              <div class="donut-legend" id="donutLegend"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="box fade-in">
+          <div class="box-title">AI Summary</div>
+          <div id="summaryText" style="font-size:.78rem;line-height:1.75;color:var(--text);"></div>
+        </div>
+
+        <div class="section-hdr fade-in">Header Analysis</div>
+        <div class="hcard-grid fade-in" id="headerGrid"></div>
+
+      </div>
+
+      <!-- Empty state -->
+      <div id="emptyState"
+           style="text-align:center;padding:52px 20px;color:var(--muted);background:var(--surface);border:1px dashed var(--border);border-radius:12px;">
+        <div style="font-size:2.6rem;margin-bottom:10px;opacity:.2">🔍</div>
+        <div>No scan results yet.</div>
+        <div style="font-size:.7rem;margin-top:4px;">Enter a URL above and hit Scan.</div>
+      </div>
+    </div>
+
+    <!-- ── COMPARE TAB ── -->
+    <div class="tab-panel" id="tab-compare">
+      <div class="page-header">
+        <div class="page-title">Compare <span>URLs</span></div>
+        <div class="page-sub">Side-by-side security</div>
+      </div>
+
+      <div class="box">
+        <div class="box-title">URL A</div>
+        <input class="url-input" id="cmpUrlA" placeholder="https://site-a.com" value="https://github.com" style="width:100%"/>
+      </div>
+
+      <div class="box">
+        <div class="box-title">URL B</div>
+        <div class="input-row">
+          <input class="url-input" id="cmpUrlB" placeholder="https://site-b.com" value="https://example.com"/>
+          <button class="btn btn-primary" id="cmpBtn" onclick="runCompare()">⚡ Compare</button>
+        </div>
+        <div class="status" id="cmpStatus">Enter two URLs and compare.</div>
+      </div>
+
+      <div id="cmpResults" style="display:none">
+        <div class="box fade-in">
+          <div class="box-title">Score Comparison</div>
+          <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;">
+            <div style="text-align:center;min-width:80px;">
+              <div style="font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;" id="cmpLblA">Site A</div>
+              <div style="font-family:var(--font-ui);font-weight:800;font-size:1.5rem;color:var(--accent);" id="cmpScoreA">--</div>
+              <div class="grade" id="cmpGradeA" style="font-size:.85rem;padding:2px 9px;display:inline-block;margin-top:3px;">--</div>
+            </div>
+            <div style="font-size:1.3rem;color:var(--muted);flex:1;text-align:center;">vs</div>
+            <div style="text-align:center;min-width:80px;">
+              <div style="font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;" id="cmpLblB">Site B</div>
+              <div style="font-family:var(--font-ui);font-weight:800;font-size:1.5rem;color:var(--info);" id="cmpScoreB">--</div>
+              <div class="grade" id="cmpGradeB" style="font-size:.85rem;padding:2px 9px;display:inline-block;margin-top:3px;">--</div>
+            </div>
+            <div id="cmpVerdict"
+                 style="flex:1;min-width:150px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:12px;font-size:.75rem;line-height:1.6;">
+            </div>
+          </div>
+        </div>
+        <div class="section-hdr fade-in">Header-by-Header</div>
+        <div class="compare-grid fade-in" id="cmpGrid"></div>
+      </div>
+    </div>
+
+    <!-- ── CRAWL TAB ── -->
+    <div class="tab-panel" id="tab-crawl">
+      <div class="page-header">
+        <div class="page-title">Multi-page <span>Crawl</span></div>
+        <div class="page-sub">Scan multiple pages sequentially</div>
+      </div>
+
+      <div class="box">
+        <div class="box-title">Base URL</div>
+        <div class="input-row">
+          <input class="url-input" id="crawlUrl" placeholder="https://example.com" value="https://example.com"/>
+          <select class="select" id="crawlDepth">
+            <option value="3">3 pages</option>
+            <option value="5" selected>5 pages</option>
+            <option value="8">8 pages</option>
+          </select>
+          <button class="btn btn-primary" id="crawlBtn" onclick="runCrawl()">🕸 Crawl</button>
+        </div>
+        <div class="status" id="crawlStatus">Enter a base URL and click Crawl.</div>
+        <div class="crawl-progress" id="crawlProgress" style="display:none">
+          <div style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--muted);margin-bottom:4px;">
+            <span id="crawlProgressLbl">Scanning...</span>
+            <span id="crawlProgressPct">0%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="crawlResults" style="display:none">
+        <div class="box fade-in">
+          <div class="box-title">Crawl Summary</div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;">
+            <div class="stat" style="flex:1;min-width:100px;"><div class="stat-n" id="crawlAvgScore" style="color:var(--accent)">--</div><div class="stat-l">Avg Score</div></div>
+            <div class="stat" style="flex:1;min-width:100px;"><div class="stat-n" id="crawlPages"    style="color:var(--good)">--</div><div class="stat-l">Pages</div></div>
+            <div class="stat" style="flex:1;min-width:100px;"><div class="stat-n" id="crawlWorst"    style="color:var(--danger)">--</div><div class="stat-l">Worst Score</div></div>
+          </div>
+        </div>
+        <div class="section-hdr fade-in">Page Results</div>
+        <div class="crawl-page-list fade-in" id="crawlPageList"></div>
+      </div>
+    </div>
+
+    <!-- ── TRENDS TAB ── -->
+    <div class="tab-panel" id="tab-trends">
+      <div class="page-header">
+        <div class="page-title">Trend <span>Charts</span></div>
+        <div class="page-sub">Score history per domain</div>
+      </div>
+      <div id="trendContent"></div>
+    </div>
+
+    <!-- ── ALERTS TAB ── -->
+    <div class="tab-panel" id="tab-alerts">
+      <div class="page-header">
+        <div class="page-title">Scheduled <span>Alerts</span></div>
+        <div class="page-sub">Re-scan &amp; notify on score change</div>
+      </div>
+
+      <div class="box">
+        <div class="box-title">Add Alert</div>
+        <div class="input-row">
+          <input class="url-input" id="alertUrl" placeholder="https://example.com"/>
+          <select class="select" id="alertInterval">
+            <option value="1">Every 1 min</option>
+            <option value="5" selected>Every 5 min</option>
+            <option value="30">Every 30 min</option>
+            <option value="60">Every hour</option>
+          </select>
+          <button class="btn btn-primary" onclick="addAlert()">+ Add</button>
+        </div>
+        <div style="font-size:.65rem;color:var(--muted);margin-top:8px;">
+          ⚠ Alerts run while this tab is open. A toast notification fires when the score changes by ≥5 points.
+        </div>
+      </div>
+
+      <div class="section-hdr">Active Alerts</div>
+      <div class="alert-list" id="alertList"></div>
+    </div>
+
+    <!-- ── HISTORY TAB ── -->
+    <div class="tab-panel" id="tab-history">
+      <div class="page-header">
+        <div class="page-title">Scan <span>History</span></div>
+        <div class="page-sub">All previous scans</div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+        <button class="btn btn-danger" onclick="clearHistory()" style="font-size:.72rem;padding:8px 14px;">🗑 Clear All</button>
+      </div>
+      <div id="historyList" class="history-list"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- App logic -->
+<script src="app.js"></script>
+
+</body>
+</html>
