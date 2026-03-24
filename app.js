@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════
-   VulnScope v3 — app.js
+   VulnSMI v3 — app.js
    ═══════════════════════════════════════════════ */
 
 // ─── CONSTANTS ────────────────────────────────────
@@ -51,10 +51,8 @@ function showTab(id, btn) {
   document.getElementById("tab-" + id).classList.add("active");
   btn.classList.add("active");
 
-  // Sync mobile tabs
-  document.querySelectorAll("#mobileTabs .tab-btn").forEach(b => {
-    if (b.getAttribute("onclick") === `showTab('${id}',this)`) b.classList.add("active");
-  });
+  // Sync ALL buttons that target the same tab using data-tab attribute
+  document.querySelectorAll(`[data-tab="${id}"]`).forEach(b => b.classList.add("active"));
 
   if (id === "trends")  renderTrends();
   if (id === "history") renderHistory();
@@ -116,7 +114,12 @@ Headers to check: ${HEADERS.map(h => h.name).join(", ")}`;
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": "",                                   // handled by Claude.ai proxy
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true", // required for browser CORS
+    },
     body: JSON.stringify({
       model: "claude-sonnet-4-20250514",
       max_tokens: 1000,
@@ -124,10 +127,16 @@ Headers to check: ${HEADERS.map(h => h.name).join(", ")}`;
     }),
   });
 
-  if (!res.ok) throw new Error(`API error ${res.status}`);
+  if (!res.ok) {
+    const errText = await res.text().catch(() => "");
+    throw new Error(`API ${res.status}${errText ? ": " + errText.slice(0, 120) : ""}`);
+  }
   const data = await res.json();
   const text = data.content.map(i => i.text || "").join("");
-  return JSON.parse(text.replace(/```json|```/g, "").trim());
+  const clean = text.replace(/```json[\s\S]*?```|```[\s\S]*?```/g, t =>
+    t.replace(/```json|```/g, "")
+  ).trim();
+  return JSON.parse(clean);
 }
 
 // ─── SINGLE SCAN ──────────────────────────────────
