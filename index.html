@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>VulnSMI - HTTP Header Scanner</title>
+  <title>VulnScope v3 — HTTP Header Scanner</title>
 
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@400;700;800&display=swap" rel="stylesheet"/>
@@ -45,7 +45,7 @@
               <path d="M9 12l2 2 4-4"/>
             </svg>
           </div>
-          VulnSMI
+          Vuln<span style="color:var(--accent)">Scope</span>
         </div>
         <button class="theme-toggle" id="themeToggle"
                 onclick="toggleTheme()"
@@ -58,7 +58,7 @@
 
     <div class="nav-label">Scanner</div>
 
-    <button class="nav-btn active" onclick="showTab('scan', this)">
+    <button class="nav-btn active" data-tab="scan" onclick="showTab('scan', this)">
       <svg class="nav-ico" viewBox="0 0 20 20" fill="currentColor">
         <path fill-rule="evenodd"
           d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
@@ -67,14 +67,14 @@
       Single Scan
     </button>
 
-    <button class="nav-btn" onclick="showTab('compare', this)">
+    <button class="nav-btn" data-tab="compare" onclick="showTab('compare', this)">
       <svg class="nav-ico" viewBox="0 0 20 20" fill="currentColor">
         <path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z"/>
       </svg>
       Compare URLs
     </button>
 
-    <button class="nav-btn" onclick="showTab('crawl', this)">
+    <button class="nav-btn" data-tab="crawl" onclick="showTab('crawl', this)">
       <svg class="nav-ico" viewBox="0 0 20 20" fill="currentColor">
         <path fill-rule="evenodd"
           d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z"
@@ -85,14 +85,14 @@
 
     <div class="nav-label" style="margin-top:6px;">Analytics</div>
 
-    <button class="nav-btn" onclick="showTab('trends', this)">
+    <button class="nav-btn" data-tab="trends" onclick="showTab('trends', this)">
       <svg class="nav-ico" viewBox="0 0 20 20" fill="currentColor">
         <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
       </svg>
       Trend Charts
     </button>
 
-    <button class="nav-btn" onclick="showTab('alerts', this)">
+    <button class="nav-btn" data-tab="alerts" onclick="showTab('alerts', this)">
       <svg class="nav-ico" viewBox="0 0 20 20" fill="currentColor">
         <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
       </svg>
@@ -103,7 +103,7 @@
       </span>
     </button>
 
-    <button class="nav-btn" onclick="showTab('history', this)">
+    <button class="nav-btn" data-tab="history" onclick="showTab('history', this)">
       <svg class="nav-ico" viewBox="0 0 20 20" fill="currentColor">
         <path fill-rule="evenodd"
           d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l3 3a1 1 0 001.414-1.414L11 9.586V6z"
@@ -117,6 +117,7 @@
     </button>
 
     <div class="sidebar-footer">
+      AI analysis by Claude.<br>
       Proxy via allorigins.win.
     </div>
 
@@ -138,12 +139,12 @@
 
     <!-- Mobile tab bar -->
     <div class="tabs" id="mobileTabs">
-      <button class="tab-btn active" onclick="showTab('scan',this)">Scan</button>
-      <button class="tab-btn" onclick="showTab('compare',this)">Compare</button>
-      <button class="tab-btn" onclick="showTab('crawl',this)">Crawl</button>
-      <button class="tab-btn" onclick="showTab('trends',this)">Trends</button>
-      <button class="tab-btn" onclick="showTab('alerts',this)">Alerts</button>
-      <button class="tab-btn" onclick="showTab('history',this)">History</button>
+      <button class="tab-btn active" data-tab="scan"    onclick="showTab('scan',this)">Scan</button>
+      <button class="tab-btn"        data-tab="compare" onclick="showTab('compare',this)">Compare</button>
+      <button class="tab-btn"        data-tab="crawl"   onclick="showTab('crawl',this)">Crawl</button>
+      <button class="tab-btn"        data-tab="trends"  onclick="showTab('trends',this)">Trends</button>
+      <button class="tab-btn"        data-tab="alerts"  onclick="showTab('alerts',this)">Alerts</button>
+      <button class="tab-btn"        data-tab="history" onclick="showTab('history',this)">History</button>
     </div>
 
     <!-- ── SCAN TAB ── -->
